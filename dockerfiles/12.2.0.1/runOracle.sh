@@ -125,7 +125,13 @@ trap _kill SIGKILL
 
 # Default for ORACLE SID
 if [ "$ORACLE_SID" == "" ]; then
-   export ORACLE_SID=ORCLCDB
+   BASE=$(ls -1t $ORACLE_BASE/oradata/dbconfig/*/oratab 2>/dev/null | head -1)
+   if [ "$BASE" == ""] ; then
+      export ORACLE_SID=ORCLCDB
+   else
+      BASE=$(dirname "$BASE")
+      export ORACLE_SID=$(basename "$BASE")
+   fi
 else
   # Make ORACLE_SID upper case
   # Github issue # 984
@@ -147,14 +153,26 @@ else
 fi;
 
 # Default for ORACLE PDB
-export ORACLE_PDB=${ORACLE_PDB:-ORCLPDB1}
+if [ "$ORACLE_PDB" == "" ] ; then
+   BASE=$(ls -1t $ORACLE_BASE/oradata/$ORACLE_SID/*/sysaux01.dbf 2>/dev/null | head -1)
+   if [ "$BASE" == "" ] ; then
+      export ORACLE_PDB=${ORACLE_PDB:-ORCLPDB1}
+   else
+      BASE=$(dirname "$BASE")
+      export ORACLE_PDB=$(basename "$BASE")
+   fi
+fi
 
 # Make ORACLE_PDB upper case
 # Github issue # 984
 export ORACLE_PDB=${ORACLE_PDB^^}
 
 # Default for ORACLE CHARACTERSET
-export ORACLE_CHARACTERSET=${ORACLE_CHARACTERSET:-AL32UTF8}
+if [[ -f $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/CHARACTERSET ]] ; then
+   export ORACLE_CHARACTERSET=${ORACLE_CHARACTERSET:-$(cat $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/CHARACTERSET)}
+else
+   export ORACLE_CHARACTERSET=${ORACLE_CHARACTERSET:-AL32UTF8}
+fi
 
 # Check whether database already exists
 if [ -d $ORACLE_BASE/oradata/$ORACLE_SID ]; then
@@ -182,6 +200,9 @@ else
   # Move database operational files to oradata
   moveFiles;
    
+  # Default for ORACLE CHARACTERSET
+  echo -n "$ORACLE_CHARACTERSET" > $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/CHARACTERSET
+
   # Execute custom provided setup scripts
   $ORACLE_BASE/$USER_SCRIPTS_FILE $ORACLE_BASE/scripts/setup
 fi;

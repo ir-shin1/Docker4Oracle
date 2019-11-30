@@ -29,7 +29,7 @@ MAINTAINER Gerald Venzl <gerald.venzl@oracle.com>
 # Environment variables required for this build (do NOT change)
 # -------------------------------------------------------------
 ENV ORACLE_BASE=/opt/oracle \
-    ORACLE_HOME=/opt/oracle/product/12.2.0.1/dbhome_1 \
+    ORACLE_HOME=/opt/oracle/product/12.2.0.1 \
     INSTALL_DIR=/opt/install \
     INSTALL_FILE_1="linuxx64_12201_database.zip" \
     INSTALL_RSP="db_inst.rsp" \
